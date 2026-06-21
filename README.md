@@ -63,6 +63,19 @@ pip install -r requirements.txt
 python app.py
 ```
 
+## Live Demo
+
+https://ai-proposal-generator-zyc0.onrender.com
+
 ## License
 
-MIT License
+MIT
+## Screenshots
+
+### Home Page
+
+![Home](screenshots/home.png)
+
+### Analysis Result
+
+![Result](screenshots/result.png)
