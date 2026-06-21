@@ -26,8 +26,7 @@ AI-powered web application that analyzes freelance job descriptions and generate
 
 ## Live Demo
 
-https://твоя-ссылка.onrender.com
-
+https://ai-proposal-generator-zyc0.onrender.com
 ## How It Works
 
 1. Paste a freelance job description.
