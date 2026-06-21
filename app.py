@@ -17,13 +17,15 @@ MAX_HISTORY = 10
 
 SYSTEM_PROMPT = """You are an expert freelance consultant who analyzes job postings and writes winning proposals.
 
-Given a freelance job description, respond with a JSON object containing exactly these keys:
+Given a freelance job description and the freelancer's skills, respond with a JSON object containing exactly these keys:
 - "project_summary": A concise 2-4 sentence overview of what the client needs.
 - "complexity_score": An integer from 1 (trivial) to 10 (highly complex).
 - "budget_range": A realistic estimated budget range in USD (e.g. "$2,000 – $4,500").
 - "timeline": A realistic estimated delivery timeline (e.g. "3–4 weeks").
-- "proposal": A polished, professional proposal letter (3-5 paragraphs) tailored to the job. Write in first person, be specific, highlight relevant expertise, and include a brief approach.
+- "proposal": A polished, professional proposal letter (3-5 paragraphs) tailored to the job and the freelancer's skills. Write in first person, be specific, highlight relevant expertise that matches the provided skills, mention concrete experience tied to those skills where they align with the job, and include a brief approach.
 - "questions_for_client": An array of 3-5 thoughtful clarifying questions to ask the client before starting.
+
+When skills are provided, weave them naturally into the proposal — emphasize overlapping skills between the job requirements and the freelancer's skill set. If no skills are provided, write a strong general proposal without inventing specific skills.
 
 Base estimates on typical freelance market rates. Be honest about complexity. Return only valid JSON, no markdown fences."""
 
@@ -136,12 +138,24 @@ def history_detail(entry_id):
 def generate():
     data = request.get_json(silent=True) or {}
     job_description = (data.get("job_description") or "").strip()
+    your_skills = (data.get("your_skills") or "").strip()
 
     if not job_description:
         return jsonify({"error": "Please provide a job description."}), 400
 
     if len(job_description) > 15000:
         return jsonify({"error": "Job description is too long (max 15,000 characters)."}), 400
+
+    if len(your_skills) > 1000:
+        return jsonify({"error": "Skills field is too long (max 1,000 characters)."}), 400
+
+    user_content = f"Analyze this freelance job posting and generate a proposal:\n\n{job_description}"
+    if your_skills:
+        user_content = (
+            f"Freelancer skills: {your_skills}\n\n"
+            f"Analyze this freelance job posting and generate a proposal tailored to those skills:\n\n"
+            f"{job_description}"
+        )
 
     try:
         client = get_client()
@@ -150,10 +164,7 @@ def generate():
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"Analyze this freelance job posting and generate a proposal:\n\n{job_description}",
-                },
+                {"role": "user", "content": user_content},
             ],
             temperature=0.7,
         )
